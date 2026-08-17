@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votación CPHS - Ubert Bugueño</title>
+    <!-- Incluimos SheetJS para exportar a Excel fácilmente -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #d32f2f;
+            --secondary-color: #1976d2;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 680px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 28px;
+            color: var(--primary-color);
+            border: 3px solid var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            letter-spacing: 1px;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin: 10px 0 5px 0;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 0.95rem;
+            color: #666;
+            margin: 0;
+            font-weight: normal;
+        }
+
+        .instruction-badge {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: block;
+            border-left: 4px solid #1976d2;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .candidates-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .candidate-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .candidate-option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .candidate-option input {
+            margin-right: 15px;
+            transform: scale(1.3);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: #b71c1c;
+        }
+
+        .btn-admin {
+            background-color: #455a64;
+            margin-top: 5px;
+        }
+
+        .btn-admin:hover {
+            background-color: #263238;
+        }
+
+        .btn-excel {
+            background-color: #2e7d32;
+            margin-top: 10px;
+        }
+
+        .btn-excel:hover {
+            background-color: #1b5e20;
+        }
+
+        .btn-danger {
+            background-color: #c62828;
+            margin-top: 15px;
+        }
+
+        .btn-danger:hover {
+            background-color: #8e0000;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .alert-error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .admin-panel {
+            display: none;
+            margin-top: 30px;
+            border-top: 2px dashed #999;
+            padding-top: 20px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+        }
+
+        .admin-panel h3 {
+            margin-top: 0;
+            color: #1565c0;
+        }
+
+        .admin-panel h4 {
+            margin-top: 25px;
+            margin-bottom: 10px;
+            color: #37474f;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .admin-actions button {
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #fff;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #e3f2fd;
+        }
+
+        .table-scroll {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="logo-title">
+            <div class="logo">UB</div>
+            <div>
+                <h1>Comité Paritario de Higiene y Seguridad</h1>
+                <h2>Elección Representantes de los Trabajadores 2026 - "María Elena"</h2>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <form id="voteForm">
+        <div class="form-group">
+            <label for="rut">RUT del Trabajador (sin puntos, con guion):</label>
+            <input type="text" id="rut" placeholder="12345678-K" required>
+        </div>
+
+        <div class="form-group">
+            <label>Seleccione a sus candidatos:</label>
+            <span class="instruction-badge"> Debe marcar exactamente <strong>3 opciones</strong> de la lista.</span>
+            
+            <div class="candidates-list">
+                <label class="candidate-option">
+                    <input type="checkbox" name="candidate" value="PAMELA GILDA SOTO DIAZ">
+                    1. PAMELA GILDA SOTO DIAZ
+                </label>
+                <label class="candidate-option">
+                    <input type="checkbox" name="candidate" value="MAGALY ANDREA LEDEZMA GONZALEZ">
+                    2. MAGALY ANDREA LEDEZMA GONZALEZ
+                </label>
+                <label class="candidate-option">
+                    <input type="checkbox" name="candidate" value="HEIDY EVELYN FLORES MENDOZA">
+                    3. HEIDY EVELYN FLORES MENDOZA
+                </label>
+                <label class="candidate-option">
+                    <input type="checkbox" name="candidate" value="YASNA PATRICIA MALEFANTE FRIZ">
+                    4. YASNA PATRICIA MALEFANTE FRIZ
+                </label>
+                <label class="candidate-option">
+                    <input type="checkbox" name="candidate" value="LUIS BERNARDINO FLORES FLORES">
+                    5. LUIS BERNARDINO FLORES FLORES
+                </label>
+                <label class="candidate-option">
+                    <input type="checkbox" name="candidate" value="DAYANA VASQUEZ">
+                    6. DAYANA VASQUEZ
+                </label>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnVote">Emitir Voto Anónimo</button>
+        <button type="button" id="btnAdminAccess" class="btn-submit btn-admin">Acceder a Escrutinio (Solo Autorizados)</button>
+    </form>
+
+    <!-- Panel de Resultados (Oculto) -->
+    <div id="adminPanel" class="admin-panel">
+        <h3>Panel de Escrutinio y Registro Auditor</h3>
+        <p><strong>RUT Administrador:</strong> <span id="adminRutDisplay"></span></p>
+        <p><strong>Participación General:</strong> <span id="totalVotes">0</span> / 20 Trabajadores Habilitados</p>
+        
+        <button type="button" id="btnExportExcel" class="btn-submit btn-excel">📊 Descargar Resultados en Excel (.xlsx)</button>
+
+        <h4>1. Conteo Total de Votos por Candidato</h4>
+        <table id="tableResults">
+            <thead>
+                <tr>
+                    <th>Candidato</th>
+                    <th>Votos Obtenidos</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTable">
+                <!-- Se llena dinámicamente -->
+            </tbody>
+        </table>
+
+        <h4>2. Registro Auditado de Participantes (Sin detalle de voto)</h4>
+        <div class="table-scroll">
+            <table id="tableVoters">
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>RUT Registrado</th>
+                        <th>Fecha y Hora del Voto</th>
+                    </tr>
+                </thead>
+                <tbody id="votersTable">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="admin-actions">
+            <button type="button" id="btnResetData" class="btn-submit btn-danger">Reiniciar / Borrar Todas las Votaciones</button>
+            <button type="button" id="btnCloseAdmin" class="btn-submit" style="background-color: #757575; margin-top: 15px;">Cerrar Vista de Escrutinio</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // CONFIGURACIÓN DE BACKEND REMOTO (GOOGLE APPS SCRIPT)
+    // Para conectar con Google Sheets de forma centralizada y remota, pegue su URL aquí:
+    const GOOGLE_SCRIPT_URL = ""; // Ejemplo: "https://script.google.com/macros/s/XXXXX/exec"
+
+    // RUTS ADMINISTRADORES AUTORIZADOS
+    const AUTHORIZED_ADMINS = ["10384746-K", "16326403-K"];
+    const RESET_PASSWORD = "APR";
+    const MAX_SELECTIONS = 3;
+
+    // PADRÓN ELECTORAL AUTORIZADO (20 Personas)
+    const AUTHORIZED_PADRON = [
+        "24406398-5", "13215876-2", "28808072-0", "07647662-4", "10167849-0",
+        "28673125-2", "28719615-6", "09891332-7", "10591933-6", "12439910-6",
+        "12575899-1", "17179992-9", "17937454-4", "18149240-6", "24831661-6",
+        "24920760-8", "27462104-4", "28156746-2", "29046520-6", "16326403-K"
+    ];
+
+    const candidates = [
+        "PAMELA GILDA SOTO DIAZ",
+        "MAGALY ANDREA LEDEZMA GONZALEZ",
+        "HEIDY EVELYN FLORES MENDOZA",
+        "YASNA PATRICIA MALEFANTE FRIZ",
+        "LUIS BERNARDINO FLORES FLORES",
+        "DAYANA VASQUEZ"
+    ];
+
+    function initStorage() {
+        if (!localStorage.getItem('voterRegistry')) {
+            localStorage.setItem('voterRegistry', JSON.stringify([]));
+        }
+        if (!localStorage.getItem('voteTally')) {
+            let initialTally = {};
+            candidates.forEach(c => initialTally[c] = 0);
+            localStorage.setItem('voteTally', JSON.stringify(initialTally));
+        }
+    }
+
+    initStorage();
+
+    // Limitar selecciones a un máximo de 3
+    const checkboxes = document.querySelectorAll('input[name="candidate"]');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            const checkedCount = document.querySelectorAll('input[name="candidate"]:checked').length;
+            if (checkedCount > MAX_SELECTIONS) {
+                cb.checked = false;
+                showAlert(`Solo puede seleccionar un máximo de ${MAX_SELECTIONS} candidatos.`, true);
+            }
+        });
+    });
+
+    function cleanRUT(rut) {
+        return rut.replace(/[^0-9kK]/g, '').toUpperCase();
+    }
+
+    function formatRUT(rut) {
+        let cleaned = cleanRUT(rut);
+        if (cleaned.length < 2) return cleaned;
+        let body = cleaned.slice(0, -1);
+        let dv = cleaned.slice(-1);
+        
+        if (body.length === 7) {
+            body = "0" + body;
+        }
+        
+        return body + '-' + dv;
+    }
+
+    function showAlert(message, isError = false) {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.textContent = message;
+        alertBox.className = `alert ${isError ? 'alert-error' : 'alert-success'}`;
+        alertBox.style.display = 'block';
+    }
+
+    // Emisión del voto
+    document.getElementById('voteForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const rawRut = document.getElementById('rut').value;
+        const formattedRut = formatRUT(rawRut);
+        
+        const selectedCandidates = Array.from(document.querySelectorAll('input[name="candidate"]:checked'))
+                                         .map(cb => cb.value);
+
+        if (!formattedRut || formattedRut.length < 9) {
+            showAlert('Por favor ingrese un RUT válido con guion (ej: 12345678-K).', true);
+            return;
+        }
+
+        // VALIDACIÓN DE PADRÓN ELECTORAL
+        const isAuthorized = AUTHORIZED_PADRON.some(rutPadron => cleanRUT(rutPadron) === cleanRUT(formattedRut));
+        
+        if (!isAuthorized) {
+            showAlert('El RUT ingresado no está habilitado en el padrón electoral de la empresa.', true);
+            return;
+        }
+
+        if (selectedCandidates.length !== MAX_SELECTIONS) {
+            showAlert(`Debe seleccionar exactamente ${MAX_SELECTIONS} candidatos para poder emitir su voto.`, true);
+            return;
+        }
+
+        const timestamp = new Date().toLocaleString('es-CL');
+
+        // Si hay backend configurado de Google Apps Script
+        if (GOOGLE_SCRIPT_URL) {
+            const btn = document.getElementById('btnVote');
+            btn.disabled = true;
+            btn.textContent = "Procesando voto...";
+            
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'vote',
+                        rut: formattedRut,
+                        candidates: selectedCandidates,
+                        timestamp: timestamp
+                    })
+                });
+                showAlert('¡Sus 3 votos han sido emitidos con éxito y registrados de forma anónima!');
+                document.getElementById('voteForm').reset();
+            } catch (err) {
+                showAlert('Error al conectar con el servidor. Intente nuevamente.', true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Emitir Voto Anónimo";
+            }
+            return;
+        }
+
+        // Fallback a localStorage local
+        let voterRegistry = JSON.parse(localStorage.getItem('voterRegistry'));
+        const alreadyVoted = voterRegistry.some(v => cleanRUT(v.rut) === cleanRUT(formattedRut));
+        if (alreadyVoted) {
+            showAlert('El RUT ingresado ya registra un voto emitido previamente.', true);
+            return;
+        }
+
+        voterRegistry.push({ rut: formattedRut, timestamp: timestamp });
+        localStorage.setItem('voterRegistry', JSON.stringify(voterRegistry));
+
+        let tally = JSON.parse(localStorage.getItem('voteTally'));
+        selectedCandidates.forEach(candidate => {
+            tally[candidate] = (tally[candidate] || 0) + 1;
+        });
+        localStorage.setItem('voteTally', JSON.stringify(tally));
+
+        showAlert('¡Sus 3 votos han sido emitidos con éxito y registrados de forma totalmente anónima!');
+        document.getElementById('voteForm').reset();
+    });
+
+    // Acceso exclusivo a Escrutinio
+    document.getElementById('btnAdminAccess').addEventListener('click', async function() {
+        const rawRut = document.getElementById('rut').value;
+        const formattedRut = formatRUT(rawRut);
+
+        const isAdmin = AUTHORIZED_ADMINS.some(adminRut => cleanRUT(adminRut) === cleanRUT(formattedRut));
+
+        if (!isAdmin) {
+            showAlert('Acceso denegado. El RUT ingresado no tiene permisos para ver el escrutinio.', true);
+            document.getElementById('adminPanel').style.display = 'none';
+            return;
+        }
+
+        showAlert('Acceso concedido al panel de escrutinio.');
+        document.getElementById('adminRutDisplay').textContent = formattedRut;
+        await updateResultsUI();
+        document.getElementById('adminPanel').style.display = 'block';
+    });
+
+    // Exportación de Resultados a Excel
+    document.getElementById('btnExportExcel').addEventListener('click', function() {
+        const wb = XLSX.utils.book_new();
+        
+        // Hoja 1: Conteo de Votos
+        const resultsTable = document.getElementById('tableResults');
+        const wsResults = XLSX.utils.table_to_sheet(resultsTable);
+        XLSX.utils.book_append_sheet(wb, wsResults, "Escrutinio Candidatos");
+
+        // Hoja 2: Libro de Votantes Auditados
+        const votersTable = document.getElementById('tableVoters');
+        const wsVoters = XLSX.utils.table_to_sheet(votersTable);
+        XLSX.utils.book_append_sheet(wb, wsVoters, "Registro Participantes");
+
+        // Descargar archivo Excel
+        XLSX.writeFile(wb, `Escrutinio_CPHS_UbertBugueno_${new Date().toISOString().slice(0,10)}.xlsx`);
+    });
+
+    // Reiniciar datos
+    document.getElementById('btnResetData').addEventListener('click', async function() {
+        const passwordInput = prompt("ADVERTENCIA: Esta acción borrará el registro de RUTs y los votos contados.\n\nIngrese la clave de autorización:");
+
+        if (passwordInput === null) return;
+
+        if (passwordInput === RESET_PASSWORD) {
+            if (GOOGLE_SCRIPT_URL) {
+                await fetch(GOOGLE_SCRIPT_URL + "?action=reset&pwd=" + encodeURIComponent(RESET_PASSWORD));
+            }
+            localStorage.removeItem('voterRegistry');
+            localStorage.removeItem('voteTally');
+            initStorage();
+            await updateResultsUI();
+            showAlert('Se han reiniciado con éxito todos los datos de la votación.');
+        } else {
+            alert("Clave incorrecta. No se realizaron cambios.");
+        }
+    });
+
+    document.getElementById('btnCloseAdmin').addEventListener('click', function() {
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('alertBox').style.display = 'none';
+    });
+
+    async function updateResultsUI() {
+        let tally = {};
+        let voterRegistry = [];
+
+        if (GOOGLE_SCRIPT_URL) {
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getResults");
+                const data = await res.json();
+                tally = data.tally;
+                voterRegistry = data.voters;
+            } catch(e) {
+                tally = JSON.parse(localStorage.getItem('voteTally'));
+                voterRegistry = JSON.parse(localStorage.getItem('voterRegistry'));
+            }
+        } else {
+            tally = JSON.parse(localStorage.getItem('voteTally'));
+            voterRegistry = JSON.parse(localStorage.getItem('voterRegistry'));
+        }
+        
+        const tbodyResults = document.getElementById('resultsTable');
+        tbodyResults.innerHTML = '';
+        document.getElementById('totalVotes').textContent = voterRegistry.length;
+
+        for (const candidate of candidates) {
+            const votes = tally[candidate] || 0;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${candidate}</td><td><strong>${votes}</strong></td>`;
+            tbodyResults.appendChild(tr);
+        }
+
+        const tbodyVoters = document.getElementById('votersTable');
+        tbodyVoters.innerHTML = '';
+
+        if (voterRegistry.length === 0) {
+            tbodyVoters.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">Aún no hay votos registrados.</td></tr>';
+        } else {
+            voterRegistry.forEach((voter, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${index + 1}</td><td><strong>${voter.rut}</strong></td><td>${voter.timestamp}</td>`;
+                tbodyVoters.appendChild(tr);
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
